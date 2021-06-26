@@ -2,7 +2,7 @@
 This tool validates if gmail addresses are valid without being authenticated.
 
 
-# Input from file
+## Input from file
 
 python3 gmailify.py email.txt
 
