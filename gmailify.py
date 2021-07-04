@@ -1,5 +1,6 @@
 import requests
 import argparse
+import re
 import sys
 
 valid_emails = []
@@ -15,6 +16,7 @@ def argsParser():
 def check(email,proxies,ssl):
     try:
         requests.packages.urllib3.disable_warnings()
+        email = re.sub(r'\+.*@', '@', email)
         resp = requests.get(f'https://mail.google.com/mail/gxlu', params={'email': email},proxies=proxies,verify=ssl)
         for cookie in resp.cookies:
             if cookie.name == "COMPASS":
