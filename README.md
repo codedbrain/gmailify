@@ -1,5 +1,5 @@
 # gmailifiy
-This tool validates if gmail addresses are valid without being authenticated.
+This tool validates if gmail addresses are valid without being authenticated. The default thread is 10 to avoid being rate limited.
 
 
 ## Input from file
