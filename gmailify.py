@@ -1,47 +1,70 @@
 import requests
+import threading
+import queue
 import argparse
 import re
 import sys
+import time
 
-valid_emails = []
+total_emails = queue.Queue()
+valid_emails = [];
+threads = []
 
 def argsParser():
     parser = argparse.ArgumentParser(description="Validate google emails without being authenticated")
     parser.add_argument("file", type=argparse.FileType('r'), help="File containing an email per line")
     parser.add_argument("-o", "--output", help="Output valid emails in a file", type=argparse.FileType('w'))
+    parser.add_argument("-e", "--email", help="pass an email")
     parser.add_argument("-n", "--nossl", help="Disable SSL",action="store_false")
     parser.add_argument("-p", "--proxy", help="Proxy server to pass requests through -p http://127.0.0.1:8080")
     return parser.parse_args()
 
-def check(email,proxies,ssl):
-    try:
-        requests.packages.urllib3.disable_warnings()
-        email = re.sub(r'\+.*@', '@', email)
-        resp = requests.get(f'https://mail.google.com/mail/gxlu', params={'email': email},proxies=proxies,verify=ssl)
-        for cookie in resp.cookies:
-            if cookie.name == "COMPASS":
-                return True
-    except requests.exceptions.SSLError as e:
-        print("SSL Error. Consider using -n flag to disable SSL errors")
+def check(args):
 
-
-def main():
-    args = argsParser()
     proxies={}
     if args.proxy is not None:
         proxies = {"http":args.proxy,"https":args.proxy}
 
+
+    while not total_emails.empty():
+        try:
+            email = total_emails.get(False)
+            requests.packages.urllib3.disable_warnings()
+            email = re.sub(r'\+.*@', '@', email)
+            resp = requests.get(f'https://mail.google.com/mail/gxlu', params={'email': email} , proxies=proxies , verify=args.nossl)
+            for cookie in resp.cookies:
+                if cookie.name == "COMPASS":
+                    valid_emails.append(email)
+                    print(email)
+        except requests.exceptions.SSLError as e:
+            print("SSL Error. Consider using -n flag to disable SSL errors")
+        time.sleep(0.03)
+
+
+
+def main():
+    args = argsParser()
+
+
     with args.file as emails:
         for email in emails:
             email = email.rstrip("\n")
-            if check(email,proxies,args.nossl):
-                valid_emails.append(email)
-                print(email) 
+            total_emails.put(email)
 
-    if args.output is not None:
-         for i in valid_emails:
-            args.output.write(i + "\n")
-            args.output.flush()
+    for i in range(10):
+        t = threading.Thread(target=check,args=(args,))
+        t.daemon = True
+        t.start()
+        threads.append(t)
+      
+    for t in threads:
+        t.join()
+
+    if total_emails.empty():
+        if args.output is not None:
+            for i in valid_emails:
+                args.output.write(i + "\n")
+                args.output.flush()
 
 if __name__ == "__main__":
 	main() 
