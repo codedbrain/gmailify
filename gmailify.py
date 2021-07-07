@@ -5,9 +5,11 @@ import argparse
 import re
 import sys
 import time
+from shutil import get_terminal_size
 
+TERM_WIDTH = get_terminal_size()[0]
 total_emails = queue.Queue()
-valid_emails = [];
+valid_emails = []
 threads = []
 
 def argsParser():
@@ -25,8 +27,9 @@ def check(args):
     if args.proxy is not None:
         proxies = {"http":args.proxy,"https":args.proxy}
 
-
+    _num_of_emails = total_emails.qsize()
     while not total_emails.empty():
+        show_progress(_num_of_emails, _num_of_emails - total_emails.qsize())
         try:
             email = total_emails.get(False)
             requests.packages.urllib3.disable_warnings()
@@ -35,12 +38,21 @@ def check(args):
             for cookie in resp.cookies:
                 if cookie.name == "COMPASS":
                     valid_emails.append(email)
+                    clear_line()
                     print(email)
         except requests.exceptions.SSLError as e:
             print("SSL Error. Consider using -n flag to disable SSL errors")
         time.sleep(0.03)
 
-
+def clear_line() -> None:
+    print(f"\r{TERM_WIDTH*' '}\r", end="", flush=True)
+    
+def show_progress(total:int, progress:int) -> None:
+    clear_line()
+    percentile = progress/total*100
+    total_blocks = 20
+    bar = "\u2588" * int(percentile/5) + " "* (20 - int(percentile/5))
+    print(f"Progress: {progress}/{total} --|{bar}|-- ({percentile:.2f}%)", end="\r")
 
 def main():
     args = argsParser()
