@@ -62,7 +62,8 @@ def main():
             email = email.rstrip("\n")
             total_emails.put(email)
 
-    for i in range(10):
+    __range = (total_emails.maxsize >= 10) * 10 + (total_emails.maxsize < 10) * 1
+    for i in range(__range):
         t = threading.Thread(target=check,args=(args,))
         t.daemon = True
         t.start()
