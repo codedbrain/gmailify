@@ -13,12 +13,14 @@ valid_emails = []
 threads = []
 
 def argsParser():
+    global print_help
     parser = argparse.ArgumentParser(description="Validate google emails without being authenticated")
-    parser.add_argument("file", type=argparse.FileType('r'), help="File containing an email per line")
+    parser.add_argument("-f","--file", type=argparse.FileType('r'), help="File containing an email per line")
     parser.add_argument("-o", "--output", help="Output valid emails in a file", type=argparse.FileType('w'))
     parser.add_argument("-e", "--email", help="pass an email")
     parser.add_argument("-n", "--nossl", help="Disable SSL",action="store_false")
     parser.add_argument("-p", "--proxy", help="Proxy server to pass requests through -p http://127.0.0.1:8080")
+    print_help = parser.print_help
     return parser.parse_args()
 
 def check(args):
@@ -55,14 +57,20 @@ def show_progress(total:int, progress:int) -> None:
 
 def main():
     args = argsParser()
+    
+    if args.file is not None:
+        with args.file as emails:
+            for email in emails:
+                email = email.rstrip("\n")
+                total_emails.put(email)
+    elif args.email:
+        total_emails.put(args.email)
+    else:
+        print_help()
+        exit(0)
 
-
-    with args.file as emails:
-        for email in emails:
-            email = email.rstrip("\n")
-            total_emails.put(email)
-
-    for i in range(10):
+    __range = (total_emails.maxsize >= 10) * 10 + (total_emails.maxsize < 10) * 1
+    for i in range(__range):
         t = threading.Thread(target=check,args=(args,))
         t.daemon = True
         t.start()
