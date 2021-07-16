@@ -1,4 +1,4 @@
-# gmailifiy
+# gmailify
 This tool validates if gmail addresses and corporate emails with google mail servers are valid without being authenticated. The default thread is 10 to avoid being rate limited.
 
 ## Check a single gmail address
