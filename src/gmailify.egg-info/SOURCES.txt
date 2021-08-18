@@ -1,0 +1,12 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+setup.py
+src/gmailify/__init__.py
+src/gmailify/__main__.py
+src/gmailify.egg-info/PKG-INFO
+src/gmailify.egg-info/SOURCES.txt
+src/gmailify.egg-info/dependency_links.txt
+src/gmailify.egg-info/requires.txt
+src/gmailify.egg-info/top_level.txt
